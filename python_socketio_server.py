@@ -13,12 +13,6 @@ def storeImg(newjpgtxt):
 	g.write(base64.b64decode(newjpgtxt))
 	g.close()
 
-
-@app.route('/')
-def index():
-    """Serve the client-side application."""
-    return render_template('index.html')
-
 @sio.on('connect')
 def connect(sid, environ):
     print('connect ', sid)
