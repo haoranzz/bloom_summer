@@ -6,22 +6,39 @@ import base64
 sio = socketio.Server()
 app = Flask(__name__)
 
-def storeImg(newjpgtxt):
-	newjpgtxt = newjpgtxt.replace("data:image/jpeg;base64,", "");
-	filename = 'some_image.jpg'  # I assume you have a way of picking unique filenames
-	g = open("out.jpg", "wb")
-	g.write(base64.b64decode(newjpgtxt))
-	g.close()
+original_image_name = ''
+
+def storeImg(imagename, newjpgtxt):
+    print("storing image", imagename)
+    newjpgtxt = newjpgtxt.replace("data:image/jpeg;base64,", "")
+    g = open(imagename, "wb")
+    g.write(base64.b64decode(newjpgtxt))
+    g.close()
+
+def processImg(imgpath):
+    with open(imgpath, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read())
+    return encoded_string
 
 @sio.on('connect')
 def connect(sid, environ):
     print('connect ', sid)
-    sio.emit('text', 'node is talking to python');
+    # sio.emit('text', 'node is talking to python');
 
-@sio.on('image')
-def message(sid, data):
+@sio.on('original_image_name')
+def imageName(sid, data):
+    print('imageName ', data)
+    global original_image_name 
+    original_image_name = data
+
+@sio.on('original_image')
+def originImg(sid, data):
     print('message ', data)
-    storeImg(data);
+    global original_image_name 
+    storeImg(original_image_name, data)
+    sio.emit('got_image', 'got image')
+    sio.emit('processed_image', processImg(original_image_name))
+
 
 @sio.on('disconnect')
 def disconnect(sid):
